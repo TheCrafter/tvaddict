@@ -34,37 +34,28 @@ instance Ae.ToJSON Series where
   toJSON = Ae.genericToJSON Ae.defaultOptions
 
 createDbFile :: [Series] -> IO ()
-createDbFile s = do
+createDbFile s =
   BS.writeFile dbFilepath $ Ae.encode s
 
 insertSeries :: [Series] -> IO ()
-insertSeries s = do
-  curSeries <- readDbFile
-  case curSeries of
-    Left err -> return ()
-    Right s' -> createDbFile $ s ++ s'
+insertSeries s =
+  alterDbFile (\s' -> createDbFile $ s ++ s')
 
 deleteSeriesByTitle :: String -> IO ()
-deleteSeriesByTitle str = do
-  curSeries <- readDbFile
-  case curSeries of
-    Left err -> return ()
-    Right s  -> do
-      let s' = GHC.List.filter (\s'' -> str /= title s'') s
-      createDbFile s'
+deleteSeriesByTitle str =
+  alterDbFile (\s -> do
+                   let s' = GHC.List.filter (\s'' -> str /= title s'') s
+                   createDbFile s')
 
 updateSeriesByTitle :: String -> Series -> IO ()
-updateSeriesByTitle title s = do
-  curSeries <- readDbFile
-  case curSeries of
-    Left err -> return ()
-    Right s' -> do
-      result <- findSeriesByTitle title
-      case result of
-        Nothing -> return ()
-        Just _  -> do
-          let s'' = updateSeriesList s s'
-          createDbFile s''
+updateSeriesByTitle title s =
+  alterDbFile (\s' -> do
+                 result <- findSeriesByTitle title
+                 case result of
+                   Nothing -> return ()
+                   Just _  -> do
+                     createDbFile $ updateSeriesList s s')
+
 
 findSeriesByTitle :: String -> IO (Maybe Series)
 findSeriesByTitle str = do
@@ -80,6 +71,13 @@ findSeriesByTitle str = do
 
 readDbFile :: IO (Either String [Series])
 readDbFile = Ae.eitherDecode <$> BS.readFile dbFilepath
+
+alterDbFile :: ([Series] -> IO ()) -> IO ()
+alterDbFile f = do
+  curSeries <- readDbFile
+  case curSeries of
+    Left err -> return ()
+    Right s' -> f s'
 
 updateSeriesList :: Series -> [Series] -> [Series]
 updateSeriesList _ []     = []

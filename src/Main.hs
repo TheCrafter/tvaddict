@@ -26,6 +26,11 @@ main = do
 
    find
 
+   putStrLn "Deleteing Flash..."
+   Db.deleteSeriesByTitle "Flash"
+
+   find
+
   where
     find = do
       putStrLn $ "Trying to find " ++ searchTitle ++ "..."

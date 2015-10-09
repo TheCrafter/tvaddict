@@ -1,32 +1,49 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric #-}
 
+import Data.Aeson as Ae
+import Data.Text  as T
+import qualified Data.ByteString.Lazy as BS
+import GHC.Generics
 
 dbFilepath = "C:/Users/TheCrafter/AppData/roaming/.tvaddict"
 
 data Episode = Episode { season :: Int
                        , epNum  :: Int
-                       }
+                       } deriving (Show, Generic)
 
-instance Show Episode where
-  show e = "S" ++ (show $ season e) ++ ".E" ++ (show $ epNum e)
-
-data Series = Series { title      :: String
+data Series = Series { title      :: !T.Text
                      , curEpisode :: Episode
-                     }
+                     } deriving (Show, Generic)
 
-instance Show Series where
-  show s = "Title: " ++ (title s) ++ "\nLast Episode watched: " ++ (show $ curEpisode s)
+instance FromJSON Episode
+instance ToJSON Episode where
+  toJSON = genericToJSON defaultOptions
+instance FromJSON Main.Series
+instance ToJSON Main.Series where
+  toJSON = genericToJSON defaultOptions
 
-mySeries :: [Series]
-mySeries = [ (Series "Gotham" (Episode 2 3))
-           , (Series "Person of Interest" (Episode 4 22))
+mySeries :: [Main.Series]
+mySeries = [ (Main.Series "Gotham" (Episode 2 3))
+           , (Main.Series "Person of Interest" (Episode 4 22))
+           , (Main.Series "Supernatural" (Episode 1 11))
            ]
 
-exportSeries :: (String -> IO()) -> [Series] -> IO ()
-exportSeries _ []     = return ()
-exportSeries f (x:xs) = do
-  f $ show x ++ "\n"
-  exportSeries f xs
+printSeries :: [Main.Series] -> IO()
+printSeries [] = return ()
+printSeries (x:xs) = do
+  putStrLn $ show x
+  printSeries xs
 
 main = do
- exportSeries putStrLn mySeries
- exportSeries (writeFile dbFilepath) mySeries
+   putStrLn "Deleting previous .tvaddict file..."
+   writeFile dbFilepath ""
+
+   putStrLn "Creating new .tvaddict file..."
+   BS.appendFile dbFilepath $ encode mySeries
+
+   putStrLn "Reading .tvaddict file..."
+   decoded <- (eitherDecode <$> BS.readFile dbFilepath) :: IO (Either String [Main.Series])
+   case decoded of
+     Left err -> putStrLn err
+     Right s  -> printSeries s

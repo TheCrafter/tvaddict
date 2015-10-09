@@ -6,6 +6,7 @@ module Database
 , createDbFile
 , insertSeries
 , deleteSeriesByTitle
+, updateSeriesByTitle
 , findSeriesByTitle
 ) where
 
@@ -52,6 +53,19 @@ deleteSeriesByTitle str = do
       let s' = GHC.List.filter (\s'' -> str /= title s'') s
       createDbFile s'
 
+updateSeriesByTitle :: String -> Series -> IO ()
+updateSeriesByTitle title s = do
+  curSeries <- readDbFile
+  case curSeries of
+    Left err -> return ()
+    Right s' -> do
+      result <- findSeriesByTitle title
+      case result of
+        Nothing -> return ()
+        Just _  -> do
+          let s'' = updateSeriesList s s'
+          createDbFile s''
+
 findSeriesByTitle :: String -> IO (Maybe Series)
 findSeriesByTitle str = do
   result <- readDbFile
@@ -66,3 +80,9 @@ findSeriesByTitle str = do
 
 readDbFile :: IO (Either String [Series])
 readDbFile = Ae.eitherDecode <$> BS.readFile dbFilepath
+
+updateSeriesList :: Series -> [Series] -> [Series]
+updateSeriesList _ []     = []
+updateSeriesList s (x:xs) = if (title s) == (title x)
+                               then [s] ++ xs
+                               else [x] ++ (updateSeriesList s xs)

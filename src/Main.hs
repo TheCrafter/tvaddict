@@ -21,8 +21,8 @@ main = do
 
    find
 
-   putStrLn $ "Deleting" ++ searchTitle
-   deleteSeriesByTitle searchTitle
+   putStrLn "Updating Flash..."
+   Db.updateSeriesByTitle searchTitle $ Series "Flash" $ Episode 0 0
 
    find
 

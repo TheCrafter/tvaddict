@@ -10,11 +10,14 @@ mySeries = [ (Series "Gotham" (Episode 2 3))
            , (Series "Supernatural" (Episode 1 11))
            ]
 
-searchTitle = "Gotham"
+searchTitle = "Flash"
 
 main = do
    putStrLn "Creating new .tvaddict file..."
    Db.createDbFile mySeries
+
+   putStrLn "Adding Flash..."
+   Db.insertSeries [Series "Flash" (Episode 1 2)]
 
    putStrLn $ "Trying to find " ++ searchTitle ++ "..."
    result <- Db.findSeriesByTitle searchTitle

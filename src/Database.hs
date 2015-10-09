@@ -4,6 +4,7 @@ module Database
 ( Episode (..)
 , Database.Series (..)
 , createDbFile
+, insertSeries
 , findSeriesByTitle
 ) where
 
@@ -33,6 +34,13 @@ instance Ae.ToJSON Series where
 createDbFile :: [Series] -> IO ()
 createDbFile s = do
   BS.writeFile dbFilepath $ Ae.encode s
+
+insertSeries :: [Series] -> IO ()
+insertSeries s = do
+  curSeries <- readDbFile
+  case curSeries of
+    Left err -> return ()
+    Right s' -> createDbFile $ s ++ s'
 
 findSeriesByTitle :: String -> IO (Maybe Series)
 findSeriesByTitle str = do

@@ -4,13 +4,14 @@ module Database
 ( Episode (..)
 , Database.Series (..)
 , createDbFile
-, readDbFile
+, findSeriesByTitle
 ) where
 
 import qualified Data.Aeson as Ae
 import Data.Text  as T
 import qualified Data.ByteString.Lazy as BS
 import GHC.Generics
+import GHC.List
 
 dbFilepath = "C:/Users/TheCrafter/AppData/roaming/.tvaddict"
 
@@ -18,7 +19,7 @@ data Episode = Episode { season :: Int
                        , epNum  :: Int
                        } deriving (Show, Generic)
 
-data Series = Series { title      :: !T.Text
+data Series = Series { title      :: String
                      , curEpisode :: Episode
                      } deriving (Show, Generic)
 
@@ -33,6 +34,17 @@ createDbFile :: [Series] -> IO ()
 createDbFile s = do
   BS.writeFile dbFilepath $ Ae.encode s
 
+findSeriesByTitle :: String -> IO (Maybe Series)
+findSeriesByTitle str = do
+  result <- readDbFile
+  case result of
+    Left err -> return Nothing
+    Right series -> do
+      let seriesList = GHC.List.filter (\s -> str == title s) series
+      let listLength = GHC.List.length seriesList
+      case listLength of
+        1 -> return $ Just $ GHC.List.head seriesList
+        _ -> return Nothing
+
 readDbFile :: IO (Either String [Series])
 readDbFile = Ae.eitherDecode <$> BS.readFile dbFilepath
-

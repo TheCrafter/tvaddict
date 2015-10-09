@@ -5,6 +5,7 @@ module Database
 , Database.Series (..)
 , createDbFile
 , insertSeries
+, deleteSeriesByTitle
 , findSeriesByTitle
 ) where
 
@@ -41,6 +42,15 @@ insertSeries s = do
   case curSeries of
     Left err -> return ()
     Right s' -> createDbFile $ s ++ s'
+
+deleteSeriesByTitle :: String -> IO ()
+deleteSeriesByTitle str = do
+  curSeries <- readDbFile
+  case curSeries of
+    Left err -> return ()
+    Right s  -> do
+      let s' = GHC.List.filter (\s'' -> str /= title s'') s
+      createDbFile s'
 
 findSeriesByTitle :: String -> IO (Maybe Series)
 findSeriesByTitle str = do

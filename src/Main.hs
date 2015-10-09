@@ -19,8 +19,17 @@ main = do
    putStrLn "Adding Flash..."
    Db.insertSeries [Series "Flash" (Episode 1 2)]
 
-   putStrLn $ "Trying to find " ++ searchTitle ++ "..."
-   result <- Db.findSeriesByTitle searchTitle
-   case result of
-     Nothing -> putStrLn $ "Couldn't find " ++ searchTitle
-     Just x  -> putStrLn $ show x
+   find
+
+   putStrLn $ "Deleting" ++ searchTitle
+   deleteSeriesByTitle searchTitle
+
+   find
+
+  where
+    find = do
+      putStrLn $ "Trying to find " ++ searchTitle ++ "..."
+      result <- Db.findSeriesByTitle searchTitle
+      case result of
+        Nothing -> putStrLn $ "Couldn't find " ++ searchTitle
+        Just x  -> putStrLn $ show x

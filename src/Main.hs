@@ -10,9 +10,9 @@ runMenuCmd = M.runMenuCmd myMenu
 
 myMenuItems =
   [ (M.MenuItem "View all Series" printSeries)
-  , (M.MenuItem "Add series" addSeries)
-  , (M.MenuItem "Delete series" (putStrLn "TODO"))
-  , (M.MenuItem "Exit" exitSuccess)
+  , (M.MenuItem "Add series"      addSeries)
+  , (M.MenuItem "Delete series"   deleteSeries)
+  , (M.MenuItem "Exit"            exitSuccess)
   ]
 
 myMenu = M.Menu myMenuItems "Choose one of the following:"
@@ -35,6 +35,24 @@ printSeries = do
 
 addSeries :: IO ()
 addSeries = do
+  toAdd  <- getSeriesInfo
+  series <- Db.readDbFile
+
+  -- Create dbfile if it doesnt exist
+  case series of
+    Nothing -> Db.createDbFile [toAdd]
+    Just _  -> Db.insertSeries [toAdd] series
+
+deleteSeries :: IO ()
+deleteSeries = do
+  putStrLn "Write the title of the series you want to delete"
+  title <- getLine
+
+  Db.readDbFile >>= Db.deleteSeriesByTitle title >>= failedOperationCheck
+  return ()
+
+getSeriesInfo :: IO (Db.Series)
+getSeriesInfo = do
   putStrLn "Write the name of the series you want to add"
   name <- getLine
 
@@ -46,13 +64,13 @@ addSeries = do
   episode' <- getLine
   let episode = read episode' :: Int
 
-  let toAdd = Series name $ Episode season episode
-  series <- Db.readDbFile
+  return $ Series name $ Episode season episode
 
-  -- Create dbfile if it doesnt exist
-  case series of
-    Nothing -> Db.createDbFile [toAdd]
-    Just _  -> Db.insertSeries [toAdd] series
+failedOperationCheck :: Maybe x -> IO (Maybe x)
+failedOperationCheck Nothing  = do
+  putStrLn "Operation failed."
+  return Nothing
+failedOperationCheck x        = return x
 
 main = do
   putStrLn $ show myMenu

@@ -44,12 +44,16 @@ insertSeries _ Nothing = return ()
 insertSeries newSeries (Just series) =
   createDbFile $ newSeries ++ series
 
-deleteSeriesByTitle :: String -> Maybe [Series] -> IO ()
-deleteSeriesByTitle _ Nothing         = return ()
+deleteSeriesByTitle :: String -> Maybe [Series] -> IO (Maybe [Series])
+deleteSeriesByTitle _ Nothing         = return Nothing
 deleteSeriesByTitle str (Just series) =
   let s = GHC.List.filter (\s' -> str /= title s') series
   in
-    createDbFile s
+    if (GHC.List.length s) == (GHC.List.length series)
+      then return Nothing
+      else do
+        createDbFile s
+        return $ Just s
 
 
 updateSeriesByTitle :: String -> Series -> Maybe [Series] ->  IO ()

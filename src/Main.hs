@@ -19,7 +19,7 @@ myMenu = M.Menu myMenuItems "Choose one of the following:"
 
 printSeries :: IO ()
 printSeries = do
-  series <- Db.readDbFile
+  series <- Db.readDb
   case series of
     Nothing -> putStrLn "Couldn't read database file"
     Just s  -> putStrLn $ showSeries s
@@ -36,11 +36,11 @@ printSeries = do
 addSeries :: IO ()
 addSeries = do
   toAdd  <- getSeriesInfo
-  series <- Db.readDbFile
+  series <- Db.readDb
 
   -- Create dbfile if it doesnt exist
   case series of
-    Nothing -> Db.createDbFile [toAdd]
+    Nothing -> Db.createDb [toAdd]
     Just _  -> Db.insertSeries [toAdd] series
 
 deleteSeries :: IO ()
@@ -48,7 +48,7 @@ deleteSeries = do
   putStrLn "Write the title of the series you want to delete"
   title <- getLine
 
-  Db.readDbFile >>= Db.deleteSeriesByTitle title >>= failedOperationCheck
+  Db.readDb >>= Db.deleteSeriesByTitle title >>= failedOperationCheck
   return ()
 
 getSeriesInfo :: IO (Db.Series)

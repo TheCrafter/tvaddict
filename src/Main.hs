@@ -1,40 +1,21 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import Database as Db
+import qualified Menu as M
 import Data.Aeson as Ae
 import System.Exit
 
-data MenuItem = MenuItem { msg   :: String
-                         , cmd   :: IO ()
-                         }
-
-data Menu = Menu { items  :: [MenuItem]
-                 , header :: String
-                 }
-
-instance Show MenuItem where
-  show = msg
-
-instance Show Menu where
-  show (Menu i h) = h ++ "\n" ++ (showItems 0 i)
-
-    where
-      showItems index strList =
-        case strList of
-          []     -> ""
-          (x:xs) -> (show index) ++ ". " ++ (show x) ++ "\n" ++ showItems (index + 1) xs
-
 runMenuCmd :: Int -> IO ()
-runMenuCmd i = cmd $ (items myMenu) !! i
+runMenuCmd = M.runMenuCmd myMenu
 
 myMenuItems =
-  [ (MenuItem "View all Series" printSeries)
-  , (MenuItem "Add series" addSeries)
-  , (MenuItem "Delete series" (putStrLn "TODO"))
-  , (MenuItem "Exit" exitSuccess)
+  [ (M.MenuItem "View all Series" printSeries)
+  , (M.MenuItem "Add series" addSeries)
+  , (M.MenuItem "Delete series" (putStrLn "TODO"))
+  , (M.MenuItem "Exit" exitSuccess)
   ]
 
-myMenu = Menu myMenuItems "Choose one of the following:"
+myMenu = M.Menu myMenuItems "Choose one of the following:"
 
 printSeries :: IO ()
 printSeries = do

@@ -8,6 +8,7 @@ module Database
 , deleteSeriesByTitle
 , updateSeriesByTitle
 , findSeriesByTitle
+, readDbFile
 ) where
 
 import qualified Data.Aeson as Ae
@@ -37,47 +38,41 @@ createDbFile :: [Series] -> IO ()
 createDbFile s =
   BS.writeFile dbFilepath $ Ae.encode s
 
-insertSeries :: [Series] -> IO ()
-insertSeries s =
-  alterDbFile (\s' -> createDbFile $ s ++ s')
 
-deleteSeriesByTitle :: String -> IO ()
-deleteSeriesByTitle str =
-  alterDbFile (\s -> do
-                   let s' = GHC.List.filter (\s'' -> str /= title s'') s
-                   createDbFile s')
+insertSeries :: [Series] -> Maybe [Series] -> IO ()
+insertSeries _ Nothing = return ()
+insertSeries newSeries (Just series) =
+  createDbFile $ newSeries ++ series
 
-updateSeriesByTitle :: String -> Series -> IO ()
-updateSeriesByTitle title s =
-  alterDbFile (\s' -> do
-                 result <- findSeriesByTitle title
-                 case result of
-                   Nothing -> return ()
-                   Just _  -> do
-                     createDbFile $ updateSeriesList s s')
+deleteSeriesByTitle :: String -> Maybe [Series] -> IO ()
+deleteSeriesByTitle _ Nothing         = return ()
+deleteSeriesByTitle str (Just series) =
+  let s = GHC.List.filter (\s' -> str /= title s') series
+  in
+    createDbFile s
 
 
-findSeriesByTitle :: String -> IO (Maybe Series)
-findSeriesByTitle str = do
-  result <- readDbFile
+updateSeriesByTitle :: String -> Series -> Maybe [Series] ->  IO ()
+updateSeriesByTitle _ _ Nothing           = return ()
+updateSeriesByTitle title s (Just series) =
+  createDbFile $ updateSeriesList s series
+
+
+findSeriesByTitle :: String -> Maybe [Series] -> IO (Maybe [Series])
+findSeriesByTitle _ Nothing         = return Nothing
+findSeriesByTitle str (Just series) =
+  let series' = GHC.List.filter (\s -> str == title s) series
+  in
+    case series' of
+      [] -> return Nothing
+      x  -> return $ Just x
+
+readDbFile :: IO (Maybe [Series])
+readDbFile = do
+  result <- Ae.eitherDecode <$> BS.readFile dbFilepath
   case result of
-    Left err -> return Nothing
-    Right series -> do
-      let seriesList = GHC.List.filter (\s -> str == title s) series
-      let listLength = GHC.List.length seriesList
-      case listLength of
-        1 -> return $ Just $ GHC.List.head seriesList
-        _ -> return Nothing
-
-readDbFile :: IO (Either String [Series])
-readDbFile = Ae.eitherDecode <$> BS.readFile dbFilepath
-
-alterDbFile :: ([Series] -> IO ()) -> IO ()
-alterDbFile f = do
-  curSeries <- readDbFile
-  case curSeries of
-    Left err -> return ()
-    Right s' -> f s'
+    Left _  -> return Nothing
+    Right x -> return $ Just x
 
 updateSeriesList :: Series -> [Series] -> [Series]
 updateSeriesList _ []     = []

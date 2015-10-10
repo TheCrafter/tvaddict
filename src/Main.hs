@@ -17,24 +17,24 @@ main = do
    Db.createDbFile mySeries
 
    putStrLn "Adding Flash..."
-   Db.insertSeries [Series "Flash" (Episode 1 2)]
+   Db.readDbFile >>= Db.insertSeries [Series "Flash" (Episode 1 2)]
 
    find
 
    putStrLn "Updating Flash..."
-   Db.updateSeriesByTitle searchTitle $ Series "Flash" $ Episode 0 0
+   Db.readDbFile >>= (Db.updateSeriesByTitle searchTitle $ Series "Flash" $ Episode 0 0)
 
    find
 
    putStrLn "Deleteing Flash..."
-   Db.deleteSeriesByTitle "Flash"
+   Db.readDbFile >>= Db.deleteSeriesByTitle "Flash"
 
    find
 
   where
     find = do
       putStrLn $ "Trying to find " ++ searchTitle ++ "..."
-      result <- Db.findSeriesByTitle searchTitle
+      result <- (Db.readDbFile >>= Db.findSeriesByTitle searchTitle)
       case result of
         Nothing -> putStrLn $ "Couldn't find " ++ searchTitle
         Just x  -> putStrLn $ show x
